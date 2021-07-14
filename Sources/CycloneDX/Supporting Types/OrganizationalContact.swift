@@ -1,1 +1,3 @@
-public struct OrganizationalContact: Hashable, Encodable {}
+public struct OrganizationalContact: Hashable, Encodable {
+    public init() {}
+}

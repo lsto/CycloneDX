@@ -1,1 +1,3 @@
-public struct Patch: Hashable, Encodable {}
+public struct Patch: Hashable, Encodable {
+    public init() {}
+}

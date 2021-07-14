@@ -1,3 +1,5 @@
 import struct Foundation.URL
 
-public struct OrganizationalEntity: Hashable, Encodable {}
+public struct OrganizationalEntity: Hashable, Encodable {
+    public init() {}
+}

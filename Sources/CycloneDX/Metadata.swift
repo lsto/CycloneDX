@@ -1,7 +1,7 @@
 import Foundation
 
 public struct Metadata: Hashable {
-    public var timestamp: Date?
+    public var timestamp: Date
     public var tools: [Tool]
     public var authors: [OrganizationalContact]
     public var component: Component?
@@ -9,7 +9,7 @@ public struct Metadata: Hashable {
     public var licenses: [LicenseChoice]
     public var properties: Properties
 
-    public init(timestamp: Date? = nil,
+    public init(timestamp: Date = Date(),
                 tools: [Tool] = [],
                 authors: [OrganizationalContact] = [],
                 component: Component? = nil,
@@ -40,8 +40,8 @@ extension Metadata: Encodable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(timestamp, forKey: .timestamp)
 
+        try container.encode(timestamp, forKey: .timestamp)
         try container.encodeIfAny(in: tools, forKey: .tools)
         try container.encodeIfAny(in: authors, forKey: .authors)
         try container.encodeIfPresent(component, forKey: .component)

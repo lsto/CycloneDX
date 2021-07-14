@@ -2,7 +2,7 @@ import struct Foundation.URL
 
 /// External references provide a way to document systems, sites, and 
 /// information that may be relevant but which are not included with the BOM.
-public struct ExternalReference: Hashable, Encodable {
+public struct ExternalReference: Hashable {
     public enum Kind: String, Hashable, Encodable {
         case vcs
         case issueTracker = "issue-tracker"
@@ -35,5 +35,24 @@ public struct ExternalReference: Hashable, Encodable {
         self.url = url
         self.comment = comment
         self.hashes = hashes
+    }
+}
+
+// MARK: - Encodable
+
+extension ExternalReference: Encodable {
+    private enum CodingKeys: String, CodingKey {
+        case kind
+        case url
+        case comment
+        case hashes
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(kind, forKey: .kind)
+        try container.encodeIfPresent(url, forKey: .url)
+        try container.encodeIfPresent(comment, forKey: .comment)
+        try container.encodeIfAny(in: hashes, forKey: .hashes)
     }
 }
