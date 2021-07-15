@@ -17,10 +17,10 @@ public struct Component: Identifiable, Hashable {
     }
 
     public struct Evidence: Hashable, Encodable {
-        public var licenses: LicenseChoice?
+        public var licenses: License?
         public var copyright: Copyright?
 
-        public init(licenses: LicenseChoice? = nil, 
+        public init(licenses: License? = nil,
                     copyright: Copyright? = nil) 
         {
             self.licenses = licenses
@@ -40,7 +40,7 @@ public struct Component: Identifiable, Hashable {
     public var description: String?
     public var scope: Scope?
     public var hashes: [Hash]
-    public var licenses: [LicenseChoice]
+    public var licenses: [License]
     public var copyright: String?
     public var cpe: CPE?
     public var purl: String?
@@ -62,7 +62,7 @@ public struct Component: Identifiable, Hashable {
                 description: String? = nil,
                 scope: Scope? = nil,
                 hashes: [Hash] = [],
-                licenses: [LicenseChoice] = [],
+                licenses: [License] = [],
                 copyright: String? = nil,
                 cpe: CPE? = nil,
                 purl: String? = nil,

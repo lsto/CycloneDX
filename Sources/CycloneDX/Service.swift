@@ -27,7 +27,7 @@ public struct Service: Identifiable, Hashable, Encodable {
     public var authenticated: Bool?
     public var trustBoundary: Bool?
     public var dataFlow: DataFlow?
-    public var licenses: [LicenseChoice]
+    public var licenses: [License]
     public var externalReferences: [ExternalReference]
     public var properties: Properties
     public var services: [Service]
@@ -42,7 +42,7 @@ public struct Service: Identifiable, Hashable, Encodable {
                 authenticated: Bool? = nil,
                 trustBoundary: Bool? = nil,
                 dataFlow: DataFlow? = nil,
-                licenses: [LicenseChoice] = [],
+                licenses: [License] = [],
                 externalReferences: [ExternalReference] = [],
                 properties: Properties = [:],
                 services: [Service] = []) 

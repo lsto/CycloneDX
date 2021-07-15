@@ -6,7 +6,7 @@ public struct Metadata: Hashable {
     public var authors: [OrganizationalContact]
     public var component: Component?
     public var manufacture: OrganizationalContact?
-    public var licenses: [LicenseChoice]
+    public var licenses: [License]
     public var properties: Properties
 
     public init(timestamp: Date = Date(),
@@ -14,7 +14,7 @@ public struct Metadata: Hashable {
                 authors: [OrganizationalContact] = [],
                 component: Component? = nil,
                 manufacture: OrganizationalContact? = nil,
-                licenses: [LicenseChoice] = [],
+                licenses: [License] = [],
                 properties: Properties = [:])
     {
         self.timestamp = timestamp

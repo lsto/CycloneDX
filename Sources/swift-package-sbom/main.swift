@@ -22,7 +22,7 @@ let swiftCompiler: AbsolutePath = {
 
 // We need a package to work with.
 // This assumes there is one in the current working directory:
-let package = AbsolutePath("/Users/mattt/code/github/CycloneDX")
+let package = AbsolutePath("/Users/mattt/code/GitHub/example-package-dealer")
 
 let repository = try? Repository.discover(at: URL(fileURLWithPath: package.pathString))
 
@@ -36,11 +36,21 @@ var bom = BillOfMaterials(version: 1)
 
 //print(graph.reachableTargets.map { t in t.dependencies.map { $0.description }})
 
+var licenses: [License] = []
+
+do {
+    for file in try FileManager.default.contentsOfDirectory(at: package.asURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) {
+        guard file.lastPathComponent.localizedCaseInsensitiveContains("license"),
+              let text = try? String(contentsOf: file)
+        else { continue }
+
+        licenses.append(.license(name: file.lastPathComponent, text: text))
+    }
+}
+
 
 for product in graph.reachableProducts {
     guard product.targets.allSatisfy(graph.isInRootPackages) else { continue }
-
-
 
     let classification: Component.Classification
 
@@ -54,6 +64,16 @@ for product in graph.reachableProducts {
     }
 
     var component = Component(id: product.name, classification: classification)
+    component.licenses = licenses
+
+    // TODO
+    if let head = repository?.head?.commit {
+        var commit = CycloneDX.Commit(id: head.id.description)
+        commit.author = IdentifiableAction(timestamp: head.author.time, name: head.author.name, email: head.author.email)
+        commit.committer = IdentifiableAction(timestamp: head.committer.time, name: head.committer.name, email: head.committer.email)
+        commit.message = head.message?.trimmingCharacters(in: .whitespacesAndNewlines)
+        component.pedigree = Pedigree(commits: [commit])
+    }
 
     do {
         var filesByPath: [RelativePath: Component] = [:]
@@ -68,16 +88,6 @@ for product in graph.reachableProducts {
                 Hash(algorithm: "sha384", value: try SHA384.checksum(path)),
                 Hash(algorithm: "sha512", value: try SHA512.checksum(path))
             ]
-            
-            // TODO
-            if let head = repository?.head?.commit {
-                var commit = CycloneDX.Commit(id: head.id.description)
-                commit.author = IdentifiableAction(timestamp: head.author.time, name: head.author.name, email: head.author.email)
-                commit.committer = IdentifiableAction(timestamp: head.committer.time, name: head.committer.name, email: head.committer.email)
-                commit.message = head.message?.trimmingCharacters(in: .whitespacesAndNewlines)
-                file.pedigree = Pedigree(commits: [commit])
-            }
-
 
             filesByPath[relativePath] = file
         }
@@ -118,7 +128,7 @@ for product in graph.reachableProducts {
 //}
 
 for dependency in graph.requiredDependencies where dependency.kind == .remote {
-    var component = Component(id: dependency.identity.description, classification: .library)
+    var component = Component(id: dependency.name, classification: .library)
 
     do {
         guard let url = URL(string: dependency.repository.url) else { break }
@@ -136,11 +146,11 @@ fileprivate extension Dependency {
 }
 
 for package in graph.inputPackages {//} where !graph.isRootPackage(package) {
+
 //    if let component = bom.components.first(where: { $0.classification == .library && $0.id == package.name }) {
         bom.dependencies.append(Dependency(package))
 //    }
 }
-
 
 //print(graph.requiredDependencies)
 

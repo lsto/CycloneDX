@@ -1,24 +1,41 @@
 import struct Foundation.URL
 
-public enum LicenseChoice: Hashable, Encodable {
-    public func encode(to encoder: Encoder) throws {
-        fatalError("TODO")
-    }
-
-    case license(License)
+public enum License: Hashable {
+    case spdx(id: String, text: String? = nil, url: URL? = nil)
+    case license(name: String, text: String? = nil, url: URL? = nil)
     case expression(String)
 }
 
-public struct License: Identifiable, Hashable, Encodable {
-    public enum ID: Hashable, Encodable {
-        case other(String)
-
-        public func encode(to encoder: Encoder) throws {
-            fatalError("TODO")
-        }
+extension License: Encodable {
+    private enum ChoiceCodingKeys: String, CodingKey {
+        case license
+        case expression
     }
 
-    public var id: ID
-    public var text: String?
-    public var url: URL?
+    private enum LicenseCodingKeys: String, CodingKey {
+        case id
+        case name
+        case text
+        case url
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: ChoiceCodingKeys.self)
+
+        switch self {
+        case .spdx(id: let id, text: let text, url: let url):
+            var nestedContainer = container.nestedContainer(keyedBy: LicenseCodingKeys.self, forKey: .license)
+            try nestedContainer.encode(id, forKey: .id)
+            try nestedContainer.encodeIfPresent(text, forKey: .text)
+            try nestedContainer.encodeIfPresent(url, forKey: .url)
+        case .license(name: let name, text: let text, url: let url):
+            var nestedContainer = container.nestedContainer(keyedBy: LicenseCodingKeys.self, forKey: .license)
+            try nestedContainer.encode(name, forKey: .name)
+            try nestedContainer.encodeIfPresent(text, forKey: .text)
+            try nestedContainer.encodeIfPresent(url, forKey: .url)
+        case .expression(let expression):
+            var nestedContainer = container.nestedUnkeyedContainer(forKey: .expression)
+            try nestedContainer.encode(expression)
+        }
+    }
 }
