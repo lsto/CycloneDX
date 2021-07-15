@@ -1,4 +1,4 @@
-public struct Hash: Hashable {
+public struct Checksum: Hashable {
     public var algorithm: String
     public var value: String
 
@@ -8,9 +8,9 @@ public struct Hash: Hashable {
     }
 }
 
-extension Hash: Encodable {
+extension Checksum: Encodable {
     private enum CodingKeys: String, CodingKey {
-        case algorithm = "alg"
-        case value
+        case algorithm
+        case value = "checksumValue"
     }
 }
