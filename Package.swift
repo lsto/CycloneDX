@@ -18,6 +18,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/apple/swift-package-manager.git", .revision("swift-5.4-RELEASE")),
+        .package(url: "https://github.com/SwiftDocOrg/Git.git", .upToNextMinor(from: "0.0.1"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -27,6 +28,7 @@ let package = Package(
             dependencies: [
                 "SwiftPM",
                 "CycloneDX",
+                "Git",
 //              .product(name: "SwiftPM", package: "swift-package-manager")
             ]),
         .target(

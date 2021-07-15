@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Git",
+        "repositoryURL": "https://github.com/SwiftDocOrg/Git.git",
+        "state": {
+          "branch": null,
+          "revision": "2910f772db72b1274dd33fcd3f60de323f866e94",
+          "version": "0.0.1"
+        }
+      },
+      {
         "package": "swift-argument-parser",
         "repositoryURL": "https://github.com/apple/swift-argument-parser.git",
         "state": {

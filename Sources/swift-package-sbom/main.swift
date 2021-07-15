@@ -4,13 +4,12 @@ import PackageGraph
 import Workspace
 
 import CycloneDX
+import Git
 
 import Foundation
+import struct Foundation.URL
+import CryptoKit
 
-// PREREQUISITES
-// ============
-
-// We will need to know where the Swift compiler is.
 let swiftCompiler: AbsolutePath = {
     let string: String
     #if os(macOS)
@@ -25,15 +24,8 @@ let swiftCompiler: AbsolutePath = {
 // This assumes there is one in the current working directory:
 let package = AbsolutePath("/Users/mattt/code/github/CycloneDX")
 
-// LOADING
-// =======
+let repository = try? Repository.discover(at: URL(fileURLWithPath: package.pathString))
 
-// Note:
-// This simplified API has been added since 0.4.0 was released.
-// See older revisions for examples that work with 0.4.0.
-
-// There are several levels of information available.
-// Each takes longer to load than the level above it, but provides more detail.
 let diagnostics = DiagnosticsEngine()
 let manifest = try ManifestLoader.loadManifest(packagePath: package, swiftCompiler: swiftCompiler, swiftCompilerFlags: [], packageKind: .local)
 let loadedPackage = try PackageBuilder.loadPackage(packagePath: package, swiftCompiler: swiftCompiler, swiftCompilerFlags: [], diagnostics: diagnostics)
@@ -64,35 +56,90 @@ for product in graph.reachableProducts {
     var component = Component(id: product.name, classification: classification)
 
     do {
-        for path in Set(product.targets.flatMap { $0.sources.paths }.map { $0.relative(to: package) }) {
-            var file = Component(id: path.description, classification: .file)
+        var filesByPath: [RelativePath: Component] = [:]
+        for path in Set(product.targets.flatMap { $0.sources.paths }) {
+            let relativePath = path.relative(to: package)
+            var file = Component(id: relativePath.description, classification: .file)
 
-            switch path.extension {
-            case "swift":
-                file.mimeType = "text/x-swift"
-            default:
-                break
+            file.mimeType = path.preferredMIMEType
+
+            file.hashes = [
+                Hash(algorithm: "sha256", value: try SHA256.checksum(path)),
+                Hash(algorithm: "sha384", value: try SHA384.checksum(path)),
+                Hash(algorithm: "sha512", value: try SHA512.checksum(path))
+            ]
+            
+            // TODO
+            if let head = repository?.head?.commit {
+                var commit = CycloneDX.Commit(id: head.id.description)
+                commit.author = IdentifiableAction(timestamp: head.author.time, name: head.author.name, email: head.author.email)
+                commit.committer = IdentifiableAction(timestamp: head.committer.time, name: head.committer.name, email: head.committer.email)
+                commit.message = head.message?.trimmingCharacters(in: .whitespacesAndNewlines)
+                file.pedigree = Pedigree(commits: [commit])
             }
 
-            component.components.append(file)
+
+            filesByPath[relativePath] = file
         }
+
+        // TODO: Get last commit for a file
+//        if let revisions = try repository?.revisions(with: { walker in
+//            try walker.pushHead()
+//            try walker.sort(with: .reverse)
+//        }) {
+//            for revision in revisions {
+//                revision.
+//            }
+//        }
+
+//        if let entries = repository?.index?.entries {
+//            for entry in entries {
+//                guard let path = try? RelativePath(validating: entry.path),
+//                      var file = filesByPath[path]
+//                else { continue }
+//
+//                let commit = CycloneDX.Commit(id: entry.)
+//                file.pedigree = Pedigree(commits: [commit])
+//
+//                filesByPath[path] = file
+//            }
+//        }
+
+        component.components.append(contentsOf: filesByPath.values)
+
     }
 
     bom.components.append(component)
 }
 
+//for package in graph.inputPackages where !graph.isRootPackage(package) {
+//    var component = Component(id: package.name, classification: .library)
+//    package.
+//}
+
 for dependency in graph.requiredDependencies where dependency.kind == .remote {
-    var component = Component(id: dependency.name, classification: .library)
+    var component = Component(id: dependency.identity.description, classification: .library)
 
     do {
         guard let url = URL(string: dependency.repository.url) else { break }
-        var reference = ExternalReference(kind: .vcs, url: url)
+        let reference = ExternalReference(kind: .vcs, url: url)
         component.externalReferences.append(reference)
     }
 
     bom.components.append(component)
 }
 
+fileprivate extension Dependency {
+    init(_ package: ResolvedPackage) {
+        self.init(reference: package.name, dependsOn: package.dependencies.map(Dependency.init))
+    }
+}
+
+for package in graph.inputPackages {//} where !graph.isRootPackage(package) {
+//    if let component = bom.components.first(where: { $0.classification == .library && $0.id == package.name }) {
+        bom.dependencies.append(Dependency(package))
+//    }
+}
 
 
 //print(graph.requiredDependencies)
